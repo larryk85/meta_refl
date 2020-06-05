@@ -41,6 +41,8 @@ add_library(bluegrass_meta_refl INTERFACE)
 target_include_directories(bluegrass_meta_refl
                            INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_library(Bluegrass::MetaRefl ALIAS bluegrass_meta_refl)
+
 # ##################################################################################################
 # Build liberror tests.
 # ##################################################################################################
