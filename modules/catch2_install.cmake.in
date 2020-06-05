@@ -12,13 +12,13 @@ if (Catch2::Catch2)
 endif()
 
 if (NOT ${found_project})
-   message(STATUS "Adding project Catch2 to @CMAKE_BINARY_DIR@/catch2")
+   message(STATUS "Adding project Catch2 to @CATCH2_DIRECTORY@/catch2")
    ExternalProject_Add(
       catch2_external_proj 
       GIT_REPOSITORY "https://github.com/catchorg/Catch2" 
       GIT_TAG "v2.12.2"
-      SOURCE_DIR @CMAKE_BINARY_DIR@/catch2
-      BINARY_DIR @CMAKE_BINARY_DIR@/catch2
+      SOURCE_DIR @CATCH2_DIRECTORY@/catch2
+      BINARY_DIR @CATCH2_DIRECTORY@/catch2
       BUILD_ALWAYS 0
       BUILD_COMMAND     ""
       TEST_COMMAND      ""
