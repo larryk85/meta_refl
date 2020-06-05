@@ -24,13 +24,6 @@ namespace bluegrass { namespace meta {
       return full_name.substr(start+4, end - start - 4);
    }
 
-   template <typename Type>
-   struct field_info {
-      constexpr field_info( std::string_view nm ) : name(nm) {}
-      std::string_view name;
-      using type = Type;
-   };
-
    // tag used to define an invalid fields for field_types
    struct invalid_fields {};
 
