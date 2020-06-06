@@ -3,16 +3,16 @@
 # build meta_refl or integrate with another system with CMake.
 # ##################################################################################################
 cmake_minimum_required(VERSION 3.8)
-set(VERSION_MAJOR 1)
-set(VERSION_MINOR 0)
-set(VERSION_PATCH 0)
-set(VERSION_SUFFIX rc1)
-project(meta_refl VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+set(META_REFL_VERSION_MAJOR 1)
+set(META_REFL_VERSION_MINOR 0)
+set(META_REFL_VERSION_PATCH 0)
+set(META_REFL_VERSION_SUFFIX rc1)
+project(meta_refl VERSION ${META_REFL_VERSION_MAJOR}.${META_REFL_VERSION_MINOR}.${META_REFL_VERSION_PATCH})
 
-if (VERSION_SUFFIX)
-   set(VERSION_FULL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-${VERSION_SUFFIX}")
+if (META_REFL_VERSION_SUFFIX)
+   set(VERSION_FULL "${META_REFL_VERSION_MAJOR}.${META_REFL_VERSION_MINOR}.${META_REFL_VERSION_PATCH}-${META_REFL_VERSION_SUFFIX}")
 else()
-   set(VERSION_FULL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+   set(VERSION_FULL "${META_REFL_VERSION_MAJOR}.${META_REFL_VERSION_MINOR}.${META_REFL_VERSION_PATCH}")
 endif()
 
 message(STATUS "Building liberror v${VERSION_FULL}...")
@@ -36,7 +36,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/modules")
 add_library(meta_refl INTERFACE)
 target_include_directories(meta_refl
                            INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-add_library(Bluegrass::MetaRefl ALIAS meta_refl)
+add_library(bluegrass::meta_refl ALIAS meta_refl)
 
 # ##################################################################################################
 # Build liberror tests.
@@ -49,11 +49,17 @@ if(BLUEGRASS_META_REFL_ENABLE_TESTS)
 endif()
 
 # ##################################################################################################
+# Configure version info.
+# ##################################################################################################
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modules/meta_refl-config-version.cmake.in
+               ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake @ONLY)
+
+# ##################################################################################################
 # Exporting.
 # ##################################################################################################
-export(TARGETS meta_refl NAMESPACE bluegrass:: FILE BluegrassMetaRefl.cmake)
-set(CMAKE_EXPORT_PACKAGE_REGISTRY ON)
-export(PACKAGE meta_refl)
+export(TARGETS meta_refl
+       NAMESPACE bluegrass::
+       FILE "${CMAKE_CURRENT_BINARY_DIR}/meta_reflConfig.cmake")
 
 # ##################################################################################################
 # Installation.
@@ -62,11 +68,17 @@ if(BLUEGRASS_ENABLE_INSTALL)
    include(GNUInstallDirs)
    message(STATUS "Installing bluegrass meta_refl ...")
    install(TARGETS meta_refl
+            EXPORT meta_refl_pkg_config
             LIBRARY
             PUBLIC_HEADER
                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
                COMPONENT Headers)
    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/bluegrass
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+   install(EXPORT meta_refl_pkg_config
+           DESTINATION "${CMAKE_INSTALL_DATADIR}/meta_refl/cmake"
+           NAMESPACE bluegrass::)
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake
+           DESTINATION "#{CMAKE_INSTALL_DATADIR}/meta_refl/cmake")
 endif()
 
