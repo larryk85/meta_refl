@@ -25,8 +25,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Defined options for building or integrating liberror.
 # ##################################################################################################
 include(CMakeDependentOption)
-option(ENABLE_INSTALL "enable this library to be installed" ON)
-option(ENABLE_TESTS "enable building of unit tests" OFF)
+option(META_REFL_ENABLE_INSTALL "enable this library to be installed" ON)
+option(META_REFL_ENABLE_TESTS "enable building of unit tests" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/modules")
 
@@ -41,7 +41,7 @@ add_library(bluegrass::meta_refl ALIAS meta_refl)
 # ##################################################################################################
 # Build liberror tests.
 # ##################################################################################################
-if(BLUEGRASS_META_REFL_ENABLE_TESTS)
+if(META_REFL_ENABLE_TESTS)
    include(CTest)
    include(catch2_macro)
    use_catch2(${CMAKE_BINARY_DIR})
@@ -53,13 +53,6 @@ endif()
 # ##################################################################################################
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modules/meta_refl-config-version.cmake.in
                ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake @ONLY)
-
-# ##################################################################################################
-# Exporting.
-# ##################################################################################################
-export(TARGETS meta_refl
-       NAMESPACE bluegrass::
-       FILE "${CMAKE_CURRENT_BINARY_DIR}/meta_reflConfig.cmake")
 
 # ##################################################################################################
 # Installation.
