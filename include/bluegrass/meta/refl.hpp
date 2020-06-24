@@ -123,13 +123,12 @@ namespace bluegrass { namespace meta {
       constexpr static inline auto& get_field(T&& t) {
          static_assert(std::is_same_v<std::decay_t<T>, C>, "get_field<N, T>(T), T should be the same type as C");
          using type = std::tuple_element_t<N, field_types>;
-         return *reinterpret_cast<type*>(t._bluegrass_meta_refl_field_ptrs()[N]);
+         return *reinterpret_cast<type*>(t.template _bluegrass_meta_refl_field_ptr<N>());
       }
    };
+}} // ns meta::refl
 
-}} // ns bluegrass::meta
-
-#define BLUEGRASS_META_ADDRESS( ignore, FIELD ) &FIELD
+#define BLUEGRASS_META_ADDRESS( ignore, FIELD ) (void*)&FIELD
 #define BLUEGRASS_META_DECLTYPE( ignore, FIELD ) decltype(FIELD)
 #define BLUEGRASS_META_PASS_STR( ignore, X ) #X
 
@@ -142,10 +141,13 @@ namespace bluegrass { namespace meta {
    constexpr void _bluegrass_meta_refl_valid();                                       \
    void _bluegrass_meta_refl_fields                                                   \
       ( BLUEGRASS_META_FOREACH(BLUEGRASS_META_DECLTYPE, "ignored", ##__VA_ARGS__) ){} \
-   inline auto& _bluegrass_meta_refl_field_ptrs() {                                   \
-      static std::array<void*, BLUEGRASS_META_VA_ARGS_SIZE(__VA_ARGS__)> ptrs =       \
-         {BLUEGRASS_META_FOREACH(BLUEGRASS_META_ADDRESS, "ignored", ##__VA_ARGS__)};  \
-      return ptrs;                                                                    \
+   inline auto _bluegrass_meta_refl_field_ptrs() const {                              \
+      return std::array<void*, BLUEGRASS_META_VA_ARGS_SIZE(__VA_ARGS__)>              \
+      {BLUEGRASS_META_FOREACH(BLUEGRASS_META_ADDRESS, "ignored", ##__VA_ARGS__)};     \
+   }                                                                                  \
+   template <std::size_t N>                                                           \
+   inline void* _bluegrass_meta_refl_field_ptr() const {                              \
+      return _bluegrass_meta_refl_field_ptrs()[N];                                    \
    }                                                                                  \
    constexpr inline static auto _bluegrass_meta_refl_field_names() {                  \
       return std::array<std::string_view, BLUEGRASS_META_VA_ARGS_SIZE(__VA_ARGS__)> { \
