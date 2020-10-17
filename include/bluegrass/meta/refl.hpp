@@ -30,7 +30,7 @@ namespace bluegrass { namespace meta {
    namespace detail {
       BLUEGRASS_META_HAS_MEMBER_GENERATOR(valid, _bluegrass_meta_refl_valid);
       template <typename C>
-      constexpr static inline bool has_member_valid_v = has_member_valid<C>::value;
+      constexpr static inline bool has_member_valid_v = has_member_valid<C, void>::value;
       template <typename C>
       constexpr inline auto which_field_types() {
          if constexpr ( has_member_valid_v<C> )
