@@ -42,10 +42,10 @@ TEST_CASE("Testing basic meta object", "[basic_meta_tests]") {
    // !!! the require macro throws off the evaluation of
    // this and it will produce the wrong result because
    // of preprocessor voodoo
-   constexpr auto name = ts_meta::name;
+   constexpr auto name = ts_meta::this_name;
    REQUIRE( name == "test_struct" );
-   REQUIRE( ts_meta::field_count == 3 );
-   constexpr auto names = ts_meta::field_names;
+   REQUIRE( ts_meta::count == 3 );
+   constexpr auto names = ts_meta::names;
    REQUIRE( names.size() == 3 );
    REQUIRE( names[0] == "a" );
    REQUIRE( names[1] == "b" );
@@ -53,24 +53,24 @@ TEST_CASE("Testing basic meta object", "[basic_meta_tests]") {
 
    test_struct ts = {42, 13.13, "Hello"};
 
-   REQUIRE( std::is_same_v<ts_meta::field_type<0>, int> );
-   REQUIRE( ts_meta::get_field<0>(ts) == 42 );
-   ts_meta::get_field<0>(ts) += 3;
-   REQUIRE( ts_meta::get_field<0>(ts) == 45 );
+   REQUIRE( std::is_same_v<ts_meta::type<0>, int> );
+   REQUIRE( ts_meta::get<0>(ts) == 42 );
+   ts_meta::get<0>(ts) += 3;
+   REQUIRE( ts_meta::get<0>(ts) == 45 );
 
-   REQUIRE( std::is_same_v<ts_meta::field_type<1>, float> );
-   REQUIRE( ts_meta::get_field<1>(ts) == 13.13f );
-   ts_meta::get_field<1>(ts) += 3.3;
-   REQUIRE( ts_meta::get_field<1>(ts) == 16.43f );
+   REQUIRE( std::is_same_v<ts_meta::type<1>, float> );
+   REQUIRE( ts_meta::get<1>(ts) == 13.13f );
+   ts_meta::get<1>(ts) += 3.3;
+   REQUIRE( ts_meta::get<1>(ts) == 16.43f );
 
-   REQUIRE( std::is_same_v<ts_meta::field_type<2>, std::string> );
-   REQUIRE( ts_meta::get_field<2>(ts) == "Hello" );
-   ts_meta::get_field<2>(ts)[0] = 'f';
-   REQUIRE( ts_meta::get_field<2>(ts) == "fello" );
+   REQUIRE( std::is_same_v<ts_meta::type<2>, std::string> );
+   REQUIRE( ts_meta::get<2>(ts) == "Hello" );
+   ts_meta::get<2>(ts)[0] = 'f';
+   REQUIRE( ts_meta::get<2>(ts) == "fello" );
 
    const auto& test_lam = [&](auto& f) { update(f); };
 
-   ts_meta::for_each_field(ts, test_lam);
+   ts_meta::for_each(ts, test_lam);
 
    REQUIRE( ts.a == 65 );
    REQUIRE( ts.b == 36.43f );
@@ -79,29 +79,29 @@ TEST_CASE("Testing basic meta object", "[basic_meta_tests]") {
    using hs_meta = meta_object<hom_struct>;
 
    hom_struct hs;
-   constexpr auto name2 = hs_meta::name;
+   constexpr auto name2 = hs_meta::this_name;
    REQUIRE( name2 == "hom_struct" );
-   REQUIRE( hs_meta::field_count == 3 );
-   REQUIRE( hs_meta::field_names.size() == 0 );
-   REQUIRE( std::is_same_v<hs_meta::field_type<0>, int> );
-   REQUIRE( std::is_same_v<hs_meta::field_type<1>, int> );
-   REQUIRE( std::is_same_v<hs_meta::field_type<2>, int> );
-   REQUIRE( hs_meta::get_field<0>(hs) == 3 );
-   REQUIRE( hs_meta::get_field<1>(hs) == 4 );
-   REQUIRE( hs_meta::get_field<2>(hs) == 5 );
+   REQUIRE( hs_meta::count == 3 );
+   REQUIRE( hs_meta::names.size() == 0 );
+   REQUIRE( std::is_same_v<hs_meta::type<0>, int> );
+   REQUIRE( std::is_same_v<hs_meta::type<1>, int> );
+   REQUIRE( std::is_same_v<hs_meta::type<2>, int> );
+   REQUIRE( hs_meta::get<0>(hs) == 3 );
+   REQUIRE( hs_meta::get<1>(hs) == 4 );
+   REQUIRE( hs_meta::get<2>(hs) == 5 );
 
-   hs_meta::get_field<0>(hs) = 13;
-   hs_meta::get_field<1>(hs) = 14;
-   hs_meta::get_field<2>(hs) = 15;
+   hs_meta::get<0>(hs) = 13;
+   hs_meta::get<1>(hs) = 14;
+   hs_meta::get<2>(hs) = 15;
 
-   REQUIRE( hs_meta::get_field<0>(hs) == 13 );
-   REQUIRE( hs_meta::get_field<1>(hs) == 14 );
-   REQUIRE( hs_meta::get_field<2>(hs) == 15 );
+   REQUIRE( hs_meta::get<0>(hs) == 13 );
+   REQUIRE( hs_meta::get<1>(hs) == 14 );
+   REQUIRE( hs_meta::get<2>(hs) == 15 );
 
    int r = 30;
    const auto& test_lam2 = [&](auto i) { r += i; };
 
-   hs_meta::for_each_field(hs, test_lam2);
+   hs_meta::for_each(hs, test_lam2);
 
    REQUIRE( r == 30 + 13 + 14 + 15 );
 }

@@ -15,36 +15,51 @@ else()
    set(VERSION_FULL "${META_REFL_VERSION_MAJOR}.${META_REFL_VERSION_MINOR}.${META_REFL_VERSION_PATCH}")
 endif()
 
-message(STATUS "Building liberror v${VERSION_FULL}...")
+message(STATUS "Building meta_refl v${VERSION_FULL}...")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ##################################################################################################
-# Defined options for building or integrating liberror.
+# Defined options for building or integrating meta_refl.
 # ##################################################################################################
 include(CMakeDependentOption)
 option(META_REFL_ENABLE_INSTALL "enable this library to be installed" ON)
 option(META_REFL_ENABLE_TESTS "enable building of unit tests" OFF)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/modules")
+find_package(Git QUIET)
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+   RESULT_VARIABLE   GIT_SUBMOD_RESULT)
+
+if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+   message(FATAL_ERROR "Failed to update submodules")
+endif()
+
+add_subdirectory(modules/cmake_bits)
 
 # ##################################################################################################
-# Create the liberror library.
+# Create the meta_refl library.
 # ##################################################################################################
 add_library(meta_refl INTERFACE)
-target_include_directories(meta_refl
-                           INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(meta_refl INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(bluegrass::meta_refl ALIAS meta_refl)
 
 # ##################################################################################################
 # Build liberror tests.
 # ##################################################################################################
 if(META_REFL_ENABLE_TESTS)
+   add_project_dependency(Catch2
+      REPO https://github.com/catchorg/Catch2
+      TAG  devel
+      DIR  ${CMAKE_BINARY_DIR}
+   )
+
    include(CTest)
-   include(catch2_macro)
-   use_catch2(${CMAKE_BINARY_DIR})
+   include(Catch)
+
+   enable_testing()
    add_subdirectory(tests)
 endif()
 

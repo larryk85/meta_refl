@@ -7,6 +7,7 @@
 #include <array>
 #include <string_view>
 #include <tuple>
+#include <utility>
 
 namespace bluegrass { namespace meta {
    template <typename T>
@@ -25,23 +26,32 @@ namespace bluegrass { namespace meta {
    }
 
    // tag used to define an invalid fields for field_types
-   struct invalid_fields {};
+   struct invalid_t {};
+
+   template <typename T>
+   [[deprecated]]
+   constexpr static inline void t1() {}
+   template <typename T>
+   [[deprecated]]
+   constexpr static inline void t2() {}
 
    namespace detail {
       BLUEGRASS_META_HAS_MEMBER_GENERATOR(valid, _bluegrass_meta_refl_valid);
       template <typename C>
       constexpr static inline bool has_member_valid_v = has_member_valid<C, void>::value;
       template <typename C>
-      constexpr inline auto which_field_types() {
-         if constexpr ( has_member_valid_v<C> )
+      constexpr inline auto which_types() {
+         t1<C>();
+         if constexpr ( has_member_valid_v<C> ) {
+            t2<C>();
             return flatten_parameters_t<&C::_bluegrass_meta_refl_fields>{};
-         else
-            return invalid_fields{};
+         }else
+            return invalid_t{};
       }
 
       template <typename T>
-      constexpr inline std::size_t fields_size() {
-         if constexpr (std::is_same_v<T, invalid_fields>)
+      constexpr inline std::size_t cardinality() {
+         if constexpr (std::is_same_v<T, invalid_t>)
             return 0;
          else
             return std::tuple_size_v<T>;
@@ -70,66 +80,112 @@ namespace bluegrass { namespace meta {
 
    template <typename C, typename Derived>
    struct meta_object_base {
-      constexpr static inline std::string_view name = type_name<C>();
-      constexpr static inline auto get_name() { return name; }
+      constexpr static inline std::string_view this_name = type_name<C>();
+      constexpr static inline auto get_this_name() { return this_name; }
 
-      using field_types = invalid_fields;
+      using types = invalid_t;
       template <std::size_t N>
-      using field_type  = invalid_fields;
-      constexpr static inline std::size_t field_count = 0;
-      constexpr static auto field_names = std::array<std::string_view, 0>{};
+      using type  = invalid_t;
+      constexpr static inline std::size_t count = 0;
+      constexpr static auto names = std::array<std::string_view, 0>{};
 
-      constexpr static inline auto get_field_count() { return Derived::field_count; }
-      constexpr static inline auto get_field_name(std::size_t n) { return Derived::field_names[n]; }
-      constexpr static inline auto get_field_names() { return Derived::field_names; }
+      constexpr static inline auto get_count() { return Derived::count; }
+      constexpr static inline auto get_name(std::size_t n) { return Derived::names[n]; }
+      constexpr static inline auto get_names() { return Derived::names; }
 
       template <std::size_t N, typename T>
-      constexpr static inline auto& get_field(T&& t) {
-         return Derived::template get_field<N>(std::forward<T>(t));
+      constexpr static inline auto& get(T&& t) {
+         return Derived::template get<N>(std::forward<T>(t));
       }
 
       template <std::size_t N, typename T, typename F>
-      constexpr inline static auto for_each_field_impl( T&& t, F&& f ) {
-         if constexpr (N+1 == get_field_count())
-            return f(get_field<N>(std::forward<T>(t)));
+      constexpr inline static auto for_each_impl( T&& t, F&& f ) {
+         if constexpr (N+1 == get_count())
+            return f(get<N>(std::forward<T>(t)));
          else {
-            f(get_field<N>(std::forward<T>(t)));
-            return for_each_field_impl<N+1>(std::forward<T>(t), std::forward<F>(f));
+            f(get<N>(std::forward<T>(t)));
+            return for_each_impl<N+1>(std::forward<T>(t), std::forward<F>(f));
          }
       }
       template <typename T, typename F>
-      constexpr inline static void for_each_field( T&& t, F&& f ) {
-         if constexpr (get_field_count() == 0)
+      constexpr inline static void for_each( T&& t, F&& f ) {
+         if constexpr (get_count() == 0)
             return;
          else
-            return for_each_field_impl<0>(t, f);
+            return for_each_impl<0>(t, f);
       }
    };
+
+#define VALID_CONCEPT(T, ...) std::enable_if_t<__VA_ARGS__ detail::has_member_valid_v<T>, int>
 
    template <typename C>
    struct meta_object : meta_object_base<C, meta_object<C>> {
-      using base_t = meta_object_base<C, meta_object<C>>;
-      using base_t::name;
+      using this_t = meta_object<C>;
+      using base_t = meta_object_base<C, this_t>;
+      using base_t::this_name;
+      using base_t::get_this_name;
+      using base_t::for_each;
+      using base_t::get_count;
       using base_t::get_name;
-      using base_t::for_each_field;
-      using base_t::get_field_count;
-      using base_t::get_field_name;
-      using base_t::get_field_names;
+      using base_t::get_names;
 
-      using field_types = decltype(detail::which_field_types<C>());
+      using types = flatten_parameters_t<&C::_bluegrass_meta_refl_fields>;
       template <std::size_t N>
-      using field_type = std::tuple_element_t<N, field_types>;
-      constexpr static inline std::size_t field_count = detail::fields_size<field_types>();
-      constexpr static auto field_names = C::_bluegrass_meta_refl_field_names();
+      using type = std::tuple_element_t<N, types>;
+      constexpr static inline std::size_t count = detail::cardinality<types>();
+      constexpr static auto names = C::_bluegrass_meta_refl_field_names();
 
-      template <std::size_t N, typename T>
-      constexpr static inline auto& get_field(T&& t) {
-         static_assert(std::is_same_v<std::decay_t<T>, C>, "get_field<N, T>(T), T should be the same type as C");
-         using type = std::tuple_element_t<N, field_types>;
-         return *reinterpret_cast<type*>(t.template _bluegrass_meta_refl_field_ptr<N>());
+      template <std::size_t N>
+      constexpr static inline auto& get(C& c) {
+         using type = std::tuple_element_t<N, types>;
+         return *reinterpret_cast<type*>(c.template _bluegrass_meta_refl_field_ptr<N>());
+      }
+
+      template <std::size_t N>
+      constexpr static inline const auto& get(const C& c) {
+         using type = std::tuple_element_t<N, types>;
+         return *reinterpret_cast<type*>(c.template _bluegrass_meta_refl_field_ptr<N>());
       }
    };
+
+   template <typename... Ts>
+   struct meta_object<std::tuple<Ts...>> : meta_object_base<std::tuple<Ts...>, meta_object<std::tuple<Ts...>>> {
+      using types = std::tuple<Ts...>;
+      using this_t = meta_object<types>;
+      using base_t = meta_object_base<types, this_t>;
+      using base_t::this_name;
+      using base_t::get_this_name;
+      using base_t::for_each;
+      using base_t::get_count;
+
+      template <std::size_t N>
+      using type = std::tuple_element_t<N, types>;
+
+      constexpr static inline std::size_t count = std::tuple_size_v<types>;
+
+      template <std::size_t N, typename T>
+      constexpr static inline auto& get(T&& t) { return std::get<N>(t); }
+   };
+
+   namespace detail {
+      template <typename... Ts>
+      constexpr static inline bool is_tuple(std::tuple<Ts...>) { return true; }
+      template <typename T>
+      constexpr static inline bool is_tuple(T) { return false; }
+      template <typename T>
+      constexpr static inline auto get_meta_object()
+         -> std::enable_if_t<has_member_valid_v<T> || is_tuple<T>(), meta_object<T>>;
+   } // meta::refl::detail
+
+   template <typename T>
+   using meta_object_t = decltype(detail::get_meta_object<T>());
+
+   template <typename T>
+   constexpr static inline bool has_meta_object_v = detail::has_member_valid_v<T> || detail::is_tuple<T>();
+
 }} // ns meta::refl
+
+#undef VALID_CONCEPT
 
 #define BLUEGRASS_META_ADDRESS( ignore, FIELD ) (void*)&FIELD
 #define BLUEGRASS_META_DECLTYPE( ignore, FIELD ) decltype(FIELD)
@@ -159,26 +215,25 @@ namespace bluegrass { namespace meta {
    }
 
 // EXPERIMENTAL macro to produce meta_object specializations for homogeneous structures
-#define BLUEGRASS_HOM_META(_C, _FT, ...)                                                    \
-   namespace bluegrass { namespace meta {                                                   \
-      template <__VA_ARGS__>                                                                \
-      struct meta_object<_C> : meta_object_base<_C, meta_object<_C>> {                      \
-         using base_t = meta_object_base<_C, meta_object<_C>>;                              \
-         using base_t::name;                                                                \
-         using base_t::field_names;                                                         \
-         using base_t::get_name;                                                            \
-         using base_t::for_each_field;                                                      \
-         using base_t::get_field_count;                                                     \
-         using base_t::get_field_name;                                                      \
-         using base_t::get_field_names;                                                     \
-         constexpr static inline std::size_t field_count = sizeof(_C) / sizeof(_FT);        \
-         using field_types = decltype(detail::homogeneous_field_types<field_count, _FT>()); \
-         template <std::size_t _N>                                                          \
-         using field_type = std::tuple_element_t<_N, field_types>;                          \
-         template <std::size_t _N>                                                          \
-         constexpr static inline auto& get_field(_C& t) {                                   \
-            /* very gross and bad code is about to follow */                                \
-            return *(reinterpret_cast<_FT*>(&t)+_N);                                        \
-         }                                                                                  \
-      };                                                                                    \
+#define BLUEGRASS_HOM_META(_C, _FT, ...)                                        \
+   namespace bluegrass { namespace meta {                                       \
+      template <__VA_ARGS__>                                                    \
+      struct meta_object<_C> : meta_object_base<_C, meta_object<_C>> {          \
+         using base_t = meta_object_base<_C, meta_object<_C>>;                  \
+         using base_t::this_name;                                               \
+         using base_t::get_this_name;                                           \
+         using base_t::for_each;                                                \
+         using base_t::get_count;                                               \
+         using base_t::get_name;                                                \
+         using base_t::get_names;                                               \
+         constexpr static inline std::size_t count = sizeof(_C) / sizeof(_FT);  \
+         using types = decltype(detail::homogeneous_field_types<count, _FT>()); \
+         template <std::size_t _N>                                              \
+         using type = std::tuple_element_t<_N, types>;                          \
+         template <std::size_t _N>                                              \
+         constexpr static inline auto& get(_C& t) {                             \
+            /* very gross and bad code is about to follow */                    \
+            return *(reinterpret_cast<_FT*>(&t)+_N);                            \
+         }                                                                      \
+      };                                                                        \
    }}
