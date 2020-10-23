@@ -105,3 +105,40 @@ TEST_CASE("Testing basic meta object", "[basic_meta_tests]") {
 
    REQUIRE( r == 30 + 13 + 14 + 15 );
 }
+
+TEST_CASE("Testing tuple meta object", "[tuple_meta_tests]") {
+   using tup_0 = std::tuple<int, float, std::string>;
+   using meta_0 = meta_object<tup_0>;
+
+   tup_0 t0 = {42, 42.42f, "4242"};
+   constexpr auto name0 = meta_0::this_name;
+   REQUIRE( name0 == "std::__1::tuple<int, float, std::__1::basic_string<char> >" );
+
+   REQUIRE( std::is_same_v<meta_0::type<0>, int> );
+   REQUIRE( std::is_same_v<meta_0::type<1>, float> );
+   REQUIRE( std::is_same_v<meta_0::type<2>, std::string> );
+
+   REQUIRE( meta_0::get<0>(t0) == 42 );
+   REQUIRE( meta_0::get<1>(t0) == 42.42f );
+   REQUIRE( meta_0::get<2>(t0) == "4242" );
+
+   meta_0::get<0>(t0) = 13;
+   meta_0::get<1>(t0) = 13.13f;
+   meta_0::get<2>(t0) = "1313";
+
+   REQUIRE( meta_0::get<0>(t0) == 13 );
+   REQUIRE( meta_0::get<1>(t0) == 13.13f );
+   REQUIRE( meta_0::get<2>(t0) == "1313" );
+
+   int i = 30;
+   const auto& test_lam = [&](auto& v) {
+      if constexpr (std::is_same_v<std::decay_t<decltype(v)>, std::string>)
+         i += v.size();
+      else
+         i += v;
+   };
+
+   meta_0::for_each(t0, test_lam);
+
+   REQUIRE( i == 60 );
+}
