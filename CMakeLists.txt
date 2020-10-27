@@ -25,8 +25,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Defined options for building or integrating meta_refl.
 # ##################################################################################################
 include(CMakeDependentOption)
-option(META_REFL_ENABLE_INSTALL "enable this library to be installed" ON)
-option(META_REFL_ENABLE_TESTS "enable building of unit tests" OFF)
+option(ENABLE_INSTALL "enable this library to be installed" ON)
+option(ENABLE_TESTS "enable building of unit tests" OFF)
 
 find_package(Git QUIET)
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
@@ -43,13 +43,15 @@ add_subdirectory(modules/cmake_bits)
 # Create the meta_refl library.
 # ##################################################################################################
 add_library(meta_refl INTERFACE)
-target_include_directories(meta_refl INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(meta_refl INTERFACE
+   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+   $<INSTALL_INTERFACE:include>)
 add_library(bluegrass::meta_refl ALIAS meta_refl)
 
 # ##################################################################################################
 # Build liberror tests.
 # ##################################################################################################
-if(META_REFL_ENABLE_TESTS)
+if(ENABLE_TESTS)
    add_project_dependency(Catch2
       REPO https://github.com/catchorg/Catch2
       TAG  devel
@@ -72,21 +74,21 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modules/meta_refl-config-version.cmak
 # ##################################################################################################
 # Installation.
 # ##################################################################################################
-if(BLUEGRASS_ENABLE_INSTALL)
+if(ENABLE_INSTALL)
    include(GNUInstallDirs)
    message(STATUS "Installing bluegrass meta_refl ...")
    install(TARGETS meta_refl
-            EXPORT meta_refl_pkg_config
+            EXPORT meta_refl-config
             LIBRARY
             PUBLIC_HEADER
                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
                COMPONENT Headers)
    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/bluegrass
            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-   install(EXPORT meta_refl_pkg_config
-           DESTINATION "${CMAKE_INSTALL_DATADIR}/meta_refl/cmake"
+   install(EXPORT meta_refl-config
+           DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl"
            NAMESPACE bluegrass::)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake
-           DESTINATION "#{CMAKE_INSTALL_DATADIR}/meta_refl/cmake")
+           DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl")
 endif()
 
