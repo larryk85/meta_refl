@@ -3,17 +3,20 @@
 # build meta_refl or integrate with another system with CMake.
 # ##################################################################################################
 cmake_minimum_required(VERSION 3.8)
-set(META_REFL_VERSION_MAJOR 1)
-set(META_REFL_VERSION_MINOR 0)
-set(META_REFL_VERSION_PATCH 0)
-set(META_REFL_VERSION_SUFFIX rc1)
-project(meta_refl VERSION ${META_REFL_VERSION_MAJOR}.${META_REFL_VERSION_MINOR}.${META_REFL_VERSION_PATCH})
+project(meta_refl)
 
-if (META_REFL_VERSION_SUFFIX)
-   set(VERSION_FULL "${META_REFL_VERSION_MAJOR}.${META_REFL_VERSION_MINOR}.${META_REFL_VERSION_PATCH}-${META_REFL_VERSION_SUFFIX}")
-else()
-   set(VERSION_FULL "${META_REFL_VERSION_MAJOR}.${META_REFL_VERSION_MINOR}.${META_REFL_VERSION_PATCH}")
-endif()
+add_subdirectory(modules/cmake_bits)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/modules")
+
+create_version(
+   MAJOR 1
+   MINOR 0
+   PATCH 0
+   #SUFF  alpha
+)
+
+get_version( VERSION VERSION_FULL )
 
 message(STATUS "Building meta_refl v${VERSION_FULL}...")
 
@@ -27,17 +30,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(CMakeDependentOption)
 option(ENABLE_INSTALL "enable this library to be installed" ON)
 option(ENABLE_TESTS "enable building of unit tests" OFF)
-
-find_package(Git QUIET)
-execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-   RESULT_VARIABLE   GIT_SUBMOD_RESULT)
-
-if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-   message(FATAL_ERROR "Failed to update submodules")
-endif()
-
-add_subdirectory(modules/cmake_bits)
+option(ENABLE_DOCS "enable building of documentation" OFF)
 
 # ##################################################################################################
 # Create the meta_refl library.
@@ -92,3 +85,4 @@ if(ENABLE_INSTALL)
            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl")
 endif()
 
+add_subdirectory(docs)

@@ -12,39 +12,61 @@ struct test_struct {
    int a;
    float b;
    std::string c;
-   BLUEGRASS_META_REFL(a, b, c);
+   test_struct(int a, float b, std::string c)
+      : a(a), b(b), c(c) {}
+   static void print() {
+      std::cout << "test_struct\n";
+   }
+   META_REFL(a, b, c);
+};
+
+struct test_struct2 : test_struct {
+   using super_t = test_struct; //base_types_t<test_struct, std::true_type>;
+   test_struct2(int a, float b, std::string c, int aa)
+      : a(aa), test_struct(a,b,c) {}
+   static void print() {
+      std::cout << "test_struct2\n";
+   }
+   int a;
+   META_REFL(a);
+};
+
+struct test_struct3 : test_struct2 {
+  using super_t = test_struct2;
+   test_struct3(int a, float b, std::string c, int aa, std::string s)
+      : s(s), test_struct2(a,b,c, aa) {}
+   static void print() {
+      std::cout << "test_struct2\n";
+   }
+   std::string s;
+   META_REFL(s);
 };
 
 void update(int& i) { i += 20; }
 void update(float& f) { f += 20; }
 void update(std::string& s) { s += " Hello"; }
 
-// homogeneous struct
-struct hom_struct {
-   int a = 3;
-   int b = 4;
-   int c = 5;
-};
-
-// templated homogeneous struct
-template <typename T, std::size_t N>
-struct tn_hom_struct {
-   T a;
-   T b;
-   T c;
-};
-
-BLUEGRASS_HOM_META(hom_struct, int)
-
 TEST_CASE("Testing basic meta object", "[basic_meta_tests]") {
    using ts_meta = meta_object<test_struct>;
+
+   using ts2_meta = meta_object<test_struct2>;
+   using ts3_meta = meta_object<test_struct3>;
+
+   //ts2_meta::super_t::get_type<test_struct>::print();
+   ts2_meta::super_t::print();
+
+   test_struct2 sss = { 42, 32.32f, "hello", 1001 };
+   ts2_meta::for_each_full(sss, [](const auto& v) { std::cout << v << " " << std::endl; });
+
+   test_struct3 ss3 = { 42, 32.24f, "hello", 1001, "world" };
+   ts3_meta::for_each_full(ss3, [](const auto& v) { std::cout << v << " " << std::endl; });
 
    // !!! the require macro throws off the evaluation of
    // this and it will produce the wrong result because
    // of preprocessor voodoo
    constexpr auto name = ts_meta::this_name;
    REQUIRE( name == "test_struct" );
-   REQUIRE( ts_meta::count == 3 );
+   REQUIRE( ts_meta::cardinality == 3 );
    constexpr auto names = ts_meta::names;
    REQUIRE( names.size() == 3 );
    REQUIRE( names[0] == "a" );
@@ -75,35 +97,6 @@ TEST_CASE("Testing basic meta object", "[basic_meta_tests]") {
    REQUIRE( ts.a == 65 );
    REQUIRE( ts.b == 36.43f );
    REQUIRE( ts.c == "fello Hello" );
-
-   using hs_meta = meta_object<hom_struct>;
-
-   hom_struct hs;
-   constexpr auto name2 = hs_meta::this_name;
-   REQUIRE( name2 == "hom_struct" );
-   REQUIRE( hs_meta::count == 3 );
-   REQUIRE( hs_meta::names.size() == 0 );
-   REQUIRE( std::is_same_v<hs_meta::type<0>, int> );
-   REQUIRE( std::is_same_v<hs_meta::type<1>, int> );
-   REQUIRE( std::is_same_v<hs_meta::type<2>, int> );
-   REQUIRE( hs_meta::get<0>(hs) == 3 );
-   REQUIRE( hs_meta::get<1>(hs) == 4 );
-   REQUIRE( hs_meta::get<2>(hs) == 5 );
-
-   hs_meta::get<0>(hs) = 13;
-   hs_meta::get<1>(hs) = 14;
-   hs_meta::get<2>(hs) = 15;
-
-   REQUIRE( hs_meta::get<0>(hs) == 13 );
-   REQUIRE( hs_meta::get<1>(hs) == 14 );
-   REQUIRE( hs_meta::get<2>(hs) == 15 );
-
-   int r = 30;
-   const auto& test_lam2 = [&](auto i) { r += i; };
-
-   hs_meta::for_each(hs, test_lam2);
-
-   REQUIRE( r == 30 + 13 + 14 + 15 );
 }
 
 TEST_CASE("Testing tuple meta object", "[tuple_meta_tests]") {

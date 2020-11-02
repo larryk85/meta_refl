@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <tuple>
 
-#define BLUEGRASS_META_HAS_MEMBER_GENERATOR(NAME, MEMBER)                       \
+#define META_HAS_MEMBER_GENERATOR(NAME, MEMBER)                       \
    template <typename T, typename E>                                            \
    struct has_member_ ## NAME {                                                 \
       template <typename U, E (U::*)() const> struct sfinae {};                 \
@@ -14,7 +14,7 @@
       constexpr static const bool value = sizeof(test<T>(0)) == sizeof(char);   \
    };
 
-#define BLUEGRASS_HAS_MEMBER(ARG, NAME)                        \
+#define HAS_MEMBER(ARG, NAME)                        \
    bluegrass::meta::overloaded {                       \
         [](auto&& f, std::enable_if_t<std::is_class_v<std::decay_t<decltype(f)>> && \
                         bluegrass::meta::detail::pass_type<    \
@@ -23,7 +23,7 @@
        }, [](...) constexpr { return false; }                  \
     }(bluegrass::meta::detail::wrapper_t<decltype(ARG)>{})
 
-#define BLUEGRASS_HAS_MEMBER_TY(TY, NAME)                         \
+#define HAS_MEMBER_TY(TY, NAME)                         \
    bluegrass::meta::overloaded {                             \
         [](auto&& f, std::enable_if_t<std::is_class_v<TY> &&   \
                         bluegrass::meta::detail::pass_type<          \
@@ -32,7 +32,7 @@
        }, [](...) constexpr { return false; }                  \
     }(bluegrass::meta::detail::wrapper_t<TY>{})
 
-#define BLUEGRASS_HAS_TEMPLATE_MEMBER(ARG, NAME)                  \
+#define HAS_TEMPLATE_MEMBER(ARG, NAME)                  \
    bluegrass::meta::overloaded {                             \
         [&](auto&& f, std::enable_if_t<std::is_class_v<std::decay_t<decltype(f)>> && \
                         bluegrass::meta::detail::pass_type<          \
@@ -41,7 +41,7 @@
        }, [](...) constexpr { return false; }                  \
     }(bluegrass::meta::detail::wrapper_t<decltype(ARG)>{})
 
-#define BLUEGRASS_HAS_TEMPLATE_MEMBER_TY(TY, NAME)                \
+#define HAS_TEMPLATE_MEMBER_TY(TY, NAME)                \
    bluegrass::meta::overloaded {                             \
         [](auto&& f, std::enable_if_t<std::is_class_v<TY> &&   \
                         bluegrass::meta::detail::pass_type<          \
@@ -82,10 +82,10 @@ namespace bluegrass { namespace meta {
    }
 
    template <auto FN>
-   inline constexpr static bool is_callable_v = BLUEGRASS_HAS_MEMBER(AUTO_PARAM_WORKAROUND(FN), operator());
+   inline constexpr static bool is_callable_v = HAS_MEMBER(AUTO_PARAM_WORKAROUND(FN), operator());
 
    template <typename F>
-   constexpr bool is_callable(F&& fn) { return BLUEGRASS_HAS_MEMBER(fn, operator()); }
+   constexpr bool is_callable(F&& fn) { return HAS_MEMBER(fn, operator()); }
 
    namespace detail {
       template <bool Decay, typename R, typename... Args>
