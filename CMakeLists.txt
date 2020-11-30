@@ -84,5 +84,3 @@ if(ENABLE_INSTALL)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake
            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl")
 endif()
-
-add_subdirectory(docs)
