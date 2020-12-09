@@ -3,7 +3,7 @@ set(@PROJ@_VERSION x.y.z)
 
 @PACKAGE_INIT@
 
-set_and_check(@PROJ@_INCLUDE_DIRS "@PACKAGE_cturtle_INCLUDE_DIRS@")
+set_and_check(@PROJ@_INCLUDE_DIRS "@PACKAGE_meta_refl_INCLUDE_DIRS@")
 check_required_components(@PROJ@)
 
 get_filename_component(_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
