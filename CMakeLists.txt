@@ -18,7 +18,7 @@ create_version(
 
 get_version( VERSION VERSION_FULL )
 
-message(STATUS "Building meta_refl v${VERSION_FULL}...")
+message(STATUS "Building meta_refl v${meta_refl_VERSION}...")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS ON)
@@ -42,13 +42,14 @@ target_include_directories(meta_refl INTERFACE
 add_library(bluegrass::meta_refl ALIAS meta_refl)
 
 # ##################################################################################################
-# Build liberror tests.
+# Build meta_refl tests.
 # ##################################################################################################
 if(ENABLE_TESTS)
    add_project_dependency(Catch2
       REPO https://github.com/catchorg/Catch2
       TAG  devel
       DIR  ${CMAKE_BINARY_DIR}
+      ARGS "-DCATCH_BUILD_TESTING=Off -DCATCH_ENABLE_WERROR=Off -DCATCH_INSTALL_DOCS=Off"
    )
 
    include(CTest)
@@ -64,23 +65,43 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modules/meta_refl-config-version.cmake.in
                ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake @ONLY)
 
+
 # ##################################################################################################
 # Installation.
 # ##################################################################################################
 if(ENABLE_INSTALL)
+   include(CMakePackageConfigHelpers)
    include(GNUInstallDirs)
+
    message(STATUS "Installing bluegrass meta_refl ...")
+   set(meta_refl_INCLUDE_DIRS ${CMAKE_INSTALL_INCLUDEDIR})
+   configure_package_config_file(modules/meta_refl-config.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config.cmake
+      INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl
+      PATH_VARS meta_refl_INCLUDE_DIRS
+   )
+   write_basic_package_version_file(
+      ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake
+      VERSION ${meta_refl_VERSION}
+      COMPATIBILITY SameMajorVersion
+   )
+
    install(TARGETS meta_refl
-            EXPORT meta_refl-config
-            LIBRARY
-            PUBLIC_HEADER
-               DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-               COMPONENT Headers)
+           EXPORT meta_refl-targets
+           LIBRARY
+           PUBLIC_HEADER
+              DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+              COMPONENT Headers
+   )
+   install(EXPORT meta_refl-targets
+      NAMESPACE bluegrass::
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl
+   )
    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/bluegrass
-           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-   install(EXPORT meta_refl-config
-           DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl"
-           NAMESPACE bluegrass::)
-   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake
-           DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl")
+           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+   )
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config.cmake
+                 ${CMAKE_CURRENT_BINARY_DIR}/meta_refl-config-version.cmake
+                 DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/meta_refl
+   )
 endif()
