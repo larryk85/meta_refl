@@ -47,13 +47,12 @@ add_library(bluegrass::meta_refl ALIAS meta_refl)
 if(ENABLE_TESTS)
    add_project_dependency(Catch2
       REPO https://github.com/catchorg/Catch2
-      TAG  devel
+      TAG  v2.13.4
       DIR  ${CMAKE_BINARY_DIR}
       ARGS "-DCATCH_BUILD_TESTING=Off -DCATCH_ENABLE_WERROR=Off -DCATCH_INSTALL_DOCS=Off"
    )
 
    include(CTest)
-   include(Catch)
 
    enable_testing()
    add_subdirectory(tests)

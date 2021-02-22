@@ -54,8 +54,8 @@ float test_func3();
 std::string test_func4();
 
 struct test_struct2 {
-   void test();
-   void test2(int, int, float, std::string);
+   void test() {}
+   void test2(int, int, float, std::string) {}
 };
 
 TEST_CASE("Testing return_type", "[return_type_tests]") {

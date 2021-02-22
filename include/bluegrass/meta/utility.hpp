@@ -55,9 +55,35 @@ namespace bluegrass { namespace meta {
 
 }} // ns bluegrass::meta
 
+#if defined __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-string-literal-operator-template"
    template <typename T, T... Str>
    constexpr inline bluegrass::meta::ct_string<Str...> operator""_cts() { return bluegrass::meta::ct_string<Str...>{}; }
 #pragma clang diagnostic pop
+namespace bluegrass::meta {
+constexpr static inline bool is_clang_compiled = true;
+constexpr static inline bool is_gcc_compiled = false;
+}
+#elif defined __GNUC__
+#pragma GCC diagnostic ignored "-Wgnu-string-literal-operator-template"
+   template <typename T, T... Str>
+   constexpr inline bluegrass::meta::ct_string<Str...> operator""_cts() { return bluegrass::meta::ct_string<Str...>{}; }
+#pragma GCC diagnostic pop
+namespace bluegrass::meta {
+constexpr static inline bool is_clang_compiled = false;
+constexpr static inline bool is_gcc_compiled = true;
+}
+#else
+#error "Currently, only supporting clang and gcc"
+#endif
 
+#ifdef _WIN64
+namespace bluegrass::meta {
+constexpr static inline bool is_windows_build = true;
+}
+#else
+namespace bluegrass::meta {
+constexpr static inline bool is_windows_build = false;
+}
+#endif

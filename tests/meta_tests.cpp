@@ -105,7 +105,11 @@ TEST_CASE("Testing tuple meta object", "[tuple_meta_tests]") {
 
    tup_0 t0 = {42, 42.42f, "4242"};
    constexpr auto name0 = meta_0::this_name;
-   REQUIRE( name0 == "std::__1::tuple<int, float, std::__1::basic_string<char> >" );
+   std::cout << "Name: " << name0 << "\n";
+   if constexpr (is_windows_build)
+      REQUIRE( name0 == "std::tuple<int, float, std::basic_string<char, std::char_traits<char>, std::allocator<char> > >" );
+   else
+      REQUIRE( name0 == "std::__1::tuple<int, float, std::__1::basic_string<char> >" );
 
    REQUIRE( std::is_same_v<meta_0::type<0>, int> );
    REQUIRE( std::is_same_v<meta_0::type<1>, float> );
