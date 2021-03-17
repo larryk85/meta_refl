@@ -7,3 +7,4 @@ add_executable( meta_refl_unit_tests main.cpp
               )
 
 target_link_libraries( meta_refl_unit_tests PRIVATE bluegrass::meta_refl Catch2::Catch2 )
+catch_discover_tests(meta_refl_unit_tests)

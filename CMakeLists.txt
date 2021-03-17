@@ -3,20 +3,9 @@
 # build meta_refl or integrate with another system with CMake.
 # ##################################################################################################
 cmake_minimum_required(VERSION 3.8)
-project(meta_refl)
-
-add_subdirectory(modules/cmake_bits)
+project(meta_refl VERSION 1.0.0.0 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/modules")
-
-create_version(
-   MAJOR 1
-   MINOR 0
-   PATCH 0
-   #SUFF  alpha
-)
-
-get_version( VERSION VERSION_FULL )
 
 message(STATUS "Building meta_refl v${meta_refl_VERSION}...")
 
@@ -32,6 +21,8 @@ option(ENABLE_INSTALL "enable this library to be installed" ON)
 option(ENABLE_TESTS "enable building of unit tests" OFF)
 option(ENABLE_DOCS "enable building of documentation" OFF)
 
+include(FetchContent)
+
 # ##################################################################################################
 # Create the meta_refl library.
 # ##################################################################################################
@@ -45,14 +36,19 @@ add_library(bluegrass::meta_refl ALIAS meta_refl)
 # Build meta_refl tests.
 # ##################################################################################################
 if(ENABLE_TESTS)
-   add_project_dependency(Catch2
-      REPO https://github.com/catchorg/Catch2
-      TAG  v2.13.4
-      DIR  ${CMAKE_BINARY_DIR}
-      ARGS "-DCATCH_BUILD_TESTING=Off -DCATCH_ENABLE_WERROR=Off -DCATCH_INSTALL_DOCS=Off"
+   FetchContent_Declare(
+      Catch2
+      GIT_REPOSITORY https://github.com/catchorg/Catch2
+      GIT_TAG v2.13.4
    )
+   FetchContent_GetProperties(Catch2)
+   if (NOT Catch2_POPULATED)
+      FetchContent_MakeAvailable(Catch2)
+      list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/contrib")
+   endif()
 
    include(CTest)
+   include(Catch)
 
    enable_testing()
    add_subdirectory(tests)
